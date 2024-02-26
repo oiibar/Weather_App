@@ -4,8 +4,16 @@ import WeatherInfo from "./components/WeatherInfo";
 import SearchWeather from "./components/SearchWeather";
 
 function App() {
-  const [weatherData, setWeatherData] = useState({});
+  const initialWeatherData = {
+    isRendered: false,
+  };
+
+  const [weatherData, setWeatherData] = useState(initialWeatherData);
   const [cityName, setCityName] = useState("");
+
+  const handleWeatherDataChange = (newWeatherData) => {
+    setWeatherData(newWeatherData);
+  };
 
   return (
     <div>
@@ -13,8 +21,7 @@ function App() {
         <WeatherInfo weatherData={weatherData} />
       ) : (
         <SearchWeather
-          weatherData={weatherData}
-          setWeatherData={setWeatherData}
+          setWeatherData={handleWeatherDataChange}
           cityName={cityName}
           setCityName={setCityName}
         />

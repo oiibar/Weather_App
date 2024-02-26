@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function SearchWeather({
   cityName,
   setCityName,
   setWeatherData,
 }) {
+  const [isRendered, setIsRendered] = useState(false);
   const formatWeather = (data) => {
     const {
       coord: { lat, lon },
@@ -61,23 +62,59 @@ export default function SearchWeather({
     };
   };
 
+  const formatForecast = (data) => {
+    const formattedForecast = data.list.map((item) => {
+      const {
+        dt,
+        main: { temp, temp_min, temp_max, humidity },
+        weather,
+        wind: { speed },
+      } = item;
+      const { id, description, icon } = weather[0];
+      const date = new Date(dt * 1000).toLocaleDateString();
+
+      return {
+        date,
+        temperature: Math.round(temp),
+        tempMin: Math.round(temp_min),
+        tempMax: Math.round(temp_max),
+        humidity,
+        windSpeed: Math.round(speed),
+        id,
+        description,
+        weatherIcon: `http://openweathermap.org/img/wn/${icon}.png`,
+      };
+    });
+
+    return formattedForecast;
+  };
+
   const handleFinalWeather = async (e) => {
     e.preventDefault();
-    setCityName(e.target.value);
-    const formattedCurrentWeather = await fetch(
+
+    // Fetch current weather
+    const currentWeatherResponse = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=89d4cfbfc68753c0f838ed1cf1b4fbea&units=metric`
-    )
-      .then((res) => res.json())
-      .then((data) => formatWeather(data));
+    );
+    const currentWeatherData = await currentWeatherResponse.json();
+    const formattedCurrentWeather = formatWeather(currentWeatherData);
+
+    // Fetch 5-day forecast
+    const forecastResponse = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?q=${cityName}&appid=89d4cfbfc68753c0f838ed1cf1b4fbea&units=metric`
+    );
+    const forecastData = await forecastResponse.json();
+    const formattedForecast = formatForecast(forecastData);
+
+    // Set state with current weather and forecast data
     setWeatherData({
       ...formattedCurrentWeather,
+      forecast: formattedForecast,
       isRendered: true,
     });
+
     setCityName("");
-    setWeatherData({
-      ...formattedCurrentWeather,
-      isRendered: !isRendered,
-    });
+    setIsRendered(!isRendered);
   };
 
   return (
